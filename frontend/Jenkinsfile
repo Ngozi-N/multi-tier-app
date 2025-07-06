@@ -72,7 +72,7 @@ docker run -d --name ${PROJECT_NAME}-frontend -p ${FRONTEND_PORT}:${FRONTEND_POR
                     // Fix: Use a Groovy variable for ASG_NAME and interpolate it,
                     // or ensure the shell variable is correctly escaped.
                     // The safest way is to assign the shell command output to a Groovy variable first.
-                    def asgName = sh(returnStdout: true, script: "aws autoscaling describe-auto-scaling-groups --filters \"Name=tag:Name,Values=${PROJECT_NAME}-frontend-asg\" --query \"AutoScalingGroups[0].AutoScalingGroupName\" --output text").trim()
+                    def asgName = sh(returnStdout: true, script: "aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names \"${PROJECT_NAME}-frontend-asg\" --query \"AutoScalingGroups[0].AutoScalingGroupName\" --output text").trim()
 
                     sh """
                         aws autoscaling start-instance-refresh --auto-scaling-group-name ${asgName}

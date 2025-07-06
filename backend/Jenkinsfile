@@ -84,7 +84,7 @@ docker run -d --name ${PROJECT_NAME}-backend -p ${BACKEND_PORT}:${BACKEND_PORT} 
                         """
                     }
 
-                    def asgName = sh(returnStdout: true, script: "aws autoscaling describe-auto-scaling-groups --filters \"Name=tag:Name,Values=${PROJECT_NAME}-backend-asg\" --query \"AutoScalingGroups[0].AutoScalingGroupName\" --output text").trim()
+                    def asgName = sh(returnStdout: true, script: "aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names \"${PROJECT_NAME}-backend-asg\" --query \"AutoScalingGroups[0].AutoScalingGroupName\" --output text").trim()
 
                     sh """
                         aws autoscaling start-instance-refresh --auto-scaling-group-name ${asgName}
