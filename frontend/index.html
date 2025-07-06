@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Tier App Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Using a popular font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons (optional, but adds visual flair) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header class="hero-section">
+        <div class="container">
+            <h1>Welcome to Engee Cloud-Powered Dashboard!</h1>
+            <p class="subtitle">Seamlessly deployed, continuously integrated, and fully monitored.</p>
+            <div class="cta-buttons">
+                <a href="#features" class="btn btn-primary">Explore Features</a>
+                <a href="#status" class="btn btn-secondary">Check Live Status</a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="navbar">
+        <div class="container">
+            <a href="#" class="logo">MultiApp</a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#status">Status</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section id="features" class="section features-section">
+            <div class="container">
+                <h2>Key Features & Benefits</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <i class="fas fa-cloud-upload-alt feature-icon"></i>
+                        <h3>Automated Deployments</h3>
+                        <p>Leveraging Jenkins, our CI/CD pipeline ensures rapid and reliable deployments of application updates.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-server feature-icon"></i>
+                        <h3>Scalable Infrastructure</h3>
+                        <p>Built with Terraform on AWS, our infrastructure scales dynamically to meet demand, ensuring high availability.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-chart-line feature-icon"></i>
+                        <h3>Real-time Monitoring</h3>
+                        <p>Prometheus collects vital metrics, providing deep insights into application and infrastructure performance.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-tachometer-alt feature-icon"></i>
+                        <h3>Intuitive Dashboards</h3>
+                        <p>Grafana visualizes all metrics in beautiful, customizable dashboards for quick operational oversight.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="status" class="section status-section">
+            <div class="container">
+                <h2>Application Health Status</h2>
+                <div class="status-box">
+                    <p class="status-label">Backend API Status:</p>
+                    <p id="backendStatus" class="status-message loading">Checking...</p>
+                    <button id="checkBackend" class="btn btn-check">
+                        <i class="fas fa-sync-alt"></i> Refresh Status
+                    </button>
+                    <div class="status-details">
+                        <h3>What does this mean?</h3>
+                        <ul>
+                            <li><span class="status-ok">Connected:</span> The frontend successfully communicated with the backend API.</li>
+                            <li><span class="status-error">Error/Failed:</span> There was an issue reaching or getting a healthy response from the backend.</li>
+                            <li><span class="status-loading">Checking...:</span> The system is currently attempting to verify the backend's health.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="section about-section">
+            <div class="container">
+                <h2>About This Project</h2>
+                <p>This project demonstrates a robust DevOps pipeline for a multi-tier web application, showcasing the integration of industry-leading tools:</p>
+                <ul>
+                    <li><strong>Terraform:</strong> For declarative infrastructure provisioning on AWS.</li>
+                    <li><strong>Jenkins:</strong> Orchestrating continuous integration and continuous delivery.</li>
+                    <li><strong>Prometheus:</strong> A powerful monitoring system for collecting time-series data.</li>
+                    <li><strong>Grafana:</strong> For visualizing metrics and creating actionable dashboards.</li>
+                </ul>
+                <p>Our goal is to provide a comprehensive example of how these tools work together to build, deploy, and maintain a highly available and observable cloud application.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer id="contact" class="footer-section">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-col">
+                    <h3>Contact Us</h3>
+                    <p>Email: devops-team@example.com</p>
+                    <p>Phone: +1 (123) 456-7890</p>
+                </div>
+                <div class="footer-col">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#status">Status</a></li>
+                        <li><a href="#about">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Follow Us</h3>
+                    <div class="social-links">
+                        <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 Multi-Tier App. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

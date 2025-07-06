@@ -1,0 +1,16 @@
+{
+  "name": "multi-tier-backend",
+  "version": "1.0.0",
+  "description": "A simple Node.js Express backend for the multi-tier app",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"No test specified\" && exit 0"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
+  },
+  "author": "Cloud DevOps Engineer",
+  "license": "MIT"
+}
