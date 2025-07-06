@@ -1,0 +1,106 @@
+global:
+  scrape_interval: 15s # How frequently to scrape targets
+  evaluation_interval: 15s # How frequently to evaluate rules
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["localhost:9093"] # If Alertmanager is on the same host
+
+rule_files:
+  - "/etc/prometheus/alert_rules.yml" # Your alert rules
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Node Exporter on Monitoring Server
+  - job_name: "monitoring-node-exporter"
+    static_configs:
+      - targets: ["localhost:9100"]
+
+  # Jenkins Server - Node Exporter and Jenkins metrics
+  - job_name: "jenkins-metrics"
+    static_configs:
+      - targets: ["<JENKINS_PRIVATE_IP>:9100", "<JENKINS_PRIVATE_IP>:8080/prometheus"] # Node Exporter and Jenkins Prometheus plugin
+    # IMPORTANT: Jenkins metrics endpoint will vary based on plugin config, might need authentication.
+    # Replace <JENKINS_PRIVATE_IP> with the actual private IP from Terraform outputs or AWS console.
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: "(.+):9100"
+        target_label: instance
+        replacement: "jenkins-node"
+      - source_labels: [__address__]
+        regex: "(.+):8080"
+        target_label: instance
+        replacement: "jenkins-app"
+
+  # Frontend Instances - Node Exporter
+  - job_name: "frontend-node-exporter"
+    # Use EC2 Service Discovery or list static targets
+    ec2_sd_configs:
+      - region: us-east-1 # Your AWS region
+        port: 9100
+        filters:
+          - name: "tag:Tier"
+            values: ["Frontend"]
+    relabel_configs:
+      - source_labels: [__meta_ec2_private_ip]
+        target_label: __address__
+        replacement: "$$1:9100" # Use private IP for scraping
+      - source_labels: [__meta_ec2_tag_Name]
+        target_label: instance
+
+  # Backend Instances - Node Exporter
+  - job_name: "backend-node-exporter"
+    ec2_sd_configs:
+      - region: us-east-1
+        port: 9100
+        filters:
+          - name: "tag:Tier"
+            values: ["Backend"]
+    relabel_configs:
+      - source_labels: [__meta_ec2_private_ip]
+        target_label: __address__
+        replacement: "$$1:9100"
+      - source_labels: [__meta_ec2_tag_Name]
+        target_label: instance
+
+  # RDS (using CloudWatch exporter or Blackbox exporter)
+  # Option 1: CloudWatch Exporter (recommended for RDS, requires IAM permissions for Prometheus server)
+  # This would be another Docker container on your monitoring server.
+  - job_name: 'cloudwatch_rds'
+    honor_labels: true
+    static_configs:
+      - targets: ['<PROMETHEUS_SERVER_PRIVATE_IP>:9106'] # CloudWatch Exporter port
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_metrics_path
+        replacement: /metrics
+      - source_labels: [__param_metrics_path]
+        target_label: metrics_path
+      - source_labels: [__param_dimension_DBInstanceIdentifier]
+        target_label: db_instance_identifier
+      - source_labels: [__param_dimension_DBInstanceIdentifier]
+        target_label: instance # For consistent labeling
+      - target_label: __address__
+        replacement: '<PROMETHEUS_SERVER_PRIVATE_IP>:9106' # Your CloudWatch Exporter endpoint
+
+  # Option 2: Blackbox Exporter for HTTP endpoint checks (Frontend/Backend ALB)
+  - job_name: "blackbox-http"
+    metrics_path: /probe
+    params:
+      module: [http_2xx] # http_2xx module in blackbox_exporter.yml
+    static_configs:
+      - targets:
+          - "http://<FRONTEND_ALB_DNS_NAME>"
+          - "http://<BACKEND_ALB_DNS_NAME>/health" # Assuming backend has a /health endpoint
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: "<MONITORING_PRIVATE_IP>:9115" # Blackbox Exporter runs on monitoring server

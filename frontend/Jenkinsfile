@@ -1,0 +1,87 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_ACCOUNT_ID     = '693013325979'
+        AWS_REGION         = 'eu-west-2'
+        ECR_REGISTRY       = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        PROJECT_NAME       = 'multi-tier-app'
+        FRONTEND_IMAGE     = "${ECR_REGISTRY}/${PROJECT_NAME}-frontend"
+        FRONTEND_PORT      = 80
+        FRONTEND_ALB_DNS_NAME = 'multi-tier-app-frontend-alb-1261499518.eu-west-2.elb.amazonaws.com' // ACTION: Replace with your actual Frontend ALB DNS name
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // This checks out the entire multi-tier-app repository
+                git branch: 'main', credentialsId: 'github-credentials', url: 'https://github.com/Ngozi-N/multi-tier-app.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // CORRECTED: Specify the 'frontend' folder as the build context
+                    sh "docker build -t ${FRONTEND_IMAGE}:${env.BUILD_NUMBER} ./frontend"
+                }
+            }
+        }
+
+        stage('Login to ECR') {
+            steps {
+                script {
+                    withAWS(credentials: 'aws-credentials', region: AWS_REGION) {
+                        sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                sh "docker push ${FRONTEND_IMAGE}:${env.BUILD_NUMBER}"
+            }
+        }
+
+        stage('Deploy to EC2 (Frontend ASG)') {
+            steps {
+                script {
+                    def ltName = "${PROJECT_NAME}-frontend-lt"
+                    def currentLtId = sh(returnStdout: true, script: "aws ec2 describe-launch-templates --launch-template-names \"${ltName}\" --query \"LaunchTemplates[0].LaunchTemplateId\" --output text").trim()
+                    def currentLtVersion = sh(returnStdout: true, script: "aws ec2 describe-launch-templates --launch-template-names \"${ltName}\" --query \"LaunchTemplates[0].LatestVersionNumber\" --output text").trim()
+
+                    def userDataScript = """
+#!/bin/bash
+docker stop ${PROJECT_NAME}-frontend || true
+docker rm ${PROJECT_NAME}-frontend || true
+
+docker pull ${FRONTEND_IMAGE}:${env.BUILD_NUMBER}
+
+docker run -d --name ${PROJECT_NAME}-frontend -p ${FRONTEND_PORT}:${FRONTEND_PORT} ${FRONTEND_IMAGE}:${env.BUILD_NUMBER}
+                    """
+                    def base64UserData = userDataScript.bytes.encodeBase64().toString()
+
+                    sh """
+                        aws ec2 create-launch-template-version \\
+                            --launch-template-id ${currentLtId} \\
+                            --source-version ${currentLtVersion} \\
+                            --launch-template-data '{\"UserData\": \"${base64UserData}\"}'
+                    """
+
+                    sh """
+                        ASG_NAME=$(aws autoscaling describe-auto-scaling-groups --filters "Name=tag:Name,Values=${PROJECT_NAME}-frontend-asg" --query "AutoScalingGroups[0].AutoScalingGroupName" --output text)
+                        aws autoscaling start-instance-refresh --auto-scaling-group-name \$ASG_NAME
+                        echo "Instance refresh initiated for ASG \$ASG_NAME. Monitor AWS console for completion."
+                    """
+                }
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                sh "curl -f http://${FRONTEND_ALB_DNS_NAME}"
+            }
+        }
+    }
+}

@@ -1,0 +1,49 @@
+groups:
+  - name: application_alerts
+    rules:
+      - alert: HighFrontendHTTPErrors
+        expr: sum(rate(nginx_http_requests_total{status=~"5..", job="frontend"}[5m])) by (instance) > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High rate of HTTP 5xx errors on Frontend (instance {{ $labels.instance }})"
+          description: "Frontend instance {{ $labels.instance }} is experiencing a high rate of HTTP 5xx errors. Check application logs."
+
+      - alert: BackendLatencyHigh
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job="backend"}[5m])) > 0.5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backend latency is high (instance {{ $labels.instance }})"
+          description: "Backend API on {{ $labels.instance }} has 99th percentile request duration over 0.5 seconds."
+
+  - name: infrastructure_alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: node_cpu_seconds_total{mode="idle", job=~"frontend-node-exporter|backend-node-exporter|jenkins-metrics"} > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.job }} instance {{ $labels.instance }}"
+          description: "CPU utilization on {{ $labels.instance }} (job {{ $labels.job }}) has been over 80% for 5 minutes."
+
+      - alert: LowDiskSpace
+        expr: node_filesystem_avail_bytes{mountpoint="/",fstype="ext4", job=~"frontend-node-exporter|backend-node-exporter|jenkins-metrics"} / node_filesystem_size_bytes{mountpoint="/",fstype="ext4"} * 100 < 10
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space on {{ $labels.job }} instance {{ $labels.instance }}"
+          description: "Disk space on {{ $labels.instance }} (job {{ $labels.job }}) is less than 10% available."
+
+      - alert: RDSLowFreeStorage
+        expr: aws_rds_free_storage_space_bytes{db_instance_identifier="webappdb"} < 5000000000 # Less than 5GB
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "RDS database has low free storage space (instance {{ $labels.db_instance_identifier }})"
+          description: "RDS instance {{ $labels.db_instance_identifier }} has less than 5GB of free storage."
