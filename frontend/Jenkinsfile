@@ -66,13 +66,19 @@ docker run -d --name ${PROJECT_NAME}-frontend -p ${FRONTEND_PORT}:${FRONTEND_POR
                         aws ec2 create-launch-template-version \\
                             --launch-template-id ${currentLtId} \\
                             --source-version ${currentLtVersion} \\
-                            --launch-template-data '{\"UserData\": \"${base64UserData}\"}'
+                            --launch-template-data '{\\"UserData\\": \\"${base64UserData}\\"}'
                     """
 
+                    // Fix: Use a Groovy variable for ASG_NAME and interpolate it,
+                    // or ensure the shell variable is correctly escaped.
+                    // The safest way is to assign the shell command output to a Groovy variable first.
+                    def asgName = sh(returnStdout: true, script: "aws autoscaling describe-auto-scaling-groups --filters \"Name=tag:Name,Values=${PROJECT_NAME}-frontend-asg\" --query \"AutoScalingGroups[0].AutoScalingGroupName\" --output text").trim()
+
                     sh """
-                        ASG_NAME=$(aws autoscaling describe-auto-scaling-groups --filters "Name=tag:Name,Values=${PROJECT_NAME}-frontend-asg" --query "AutoScalingGroups[0].AutoScalingGroupName" --output text)
-                        aws autoscaling start-instance-refresh --auto-scaling-group-name \$ASG_NAME
-                        echo "Instance refresh initiated for ASG \$ASG_NAME. Monitor AWS console for completion."
+                        aws autoscaling start-instance-refresh --auto-scaling-group-name ${asgName}
+                        echo "Instance refresh initiated for ASG ${asgName}. Monitor AWS console for completion."
+                        # If you put this line back, ensure it also uses ${asgName}
+                        # aws autoscaling describe-instance-refreshes --auto-scaling-group-name ${asgName} --query "InstanceRefreshes[0].Status" --output text
                     """
                 }
             }
