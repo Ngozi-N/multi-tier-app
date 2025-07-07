@@ -8,7 +8,7 @@ pipeline {
         PROJECT_NAME       = 'multi-tier-app'
         FRONTEND_IMAGE     = "${ECR_REGISTRY}/${PROJECT_NAME}-frontend"
         FRONTEND_PORT      = 80
-        FRONTEND_ALB_DNS_NAME = 'multi-tier-app-frontend-alb-1261499518.eu-west-2.elb.amazonaws.com' // ACTION: Replace with your actual Frontend ALB DNS name
+        FRONTEND_ALB_DNS_NAME = 'multi-tier-app-frontend-alb-1582769658.eu-west-2.elb.amazonaws.com' // ACTION: Replace with your actual Frontend ALB DNS name
     }
 
     stages {
@@ -47,7 +47,7 @@ pipeline {
         stage('Deploy to EC2 (Frontend ASG)') {
             steps {
                 script {
-                    def ltName = "multi-tier-app-frontend-lt20250706145436379600000007"
+                    def ltName = "multi-tier-app-frontend-lt20250707091831629800000009"
                     def currentLtId = sh(returnStdout: true, script: "aws ec2 describe-launch-templates --launch-template-names \"${ltName}\" --query \"LaunchTemplates[0].LaunchTemplateId\" --output text").trim()
                     def currentLtVersion = sh(returnStdout: true, script: "aws ec2 describe-launch-templates --launch-template-names \"${ltName}\" --query \"LaunchTemplates[0].LatestVersionNumber\" --output text").trim()
 
